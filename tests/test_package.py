@@ -14,14 +14,31 @@ class PackageContractTest(unittest.TestCase):
     def test_legacy_harness_artifacts_are_absent(self):
         self.assertFalse((ROOT / "gemini-extension.json").exists())
         self.assertFalse((ROOT / ".agents/comment-gardener.json").exists())
-        self.assertFalse((ROOT / "agents/comment-gardener.md").exists())
 
-    def test_claude_manifest_is_metadata_only_at_0_1_0(self):
+    def test_claude_manifest_exposes_skill_command_and_agent(self):
         manifest = load_json(".claude-plugin/plugin.json")
-        self.assertEqual(manifest["version"], "0.1.0")
-        self.assertNotIn("skills", manifest)
-        self.assertNotIn("commands", manifest)
-        self.assertNotIn("agents", manifest)
+        self.assertEqual(manifest["skills"], ["skills/comment-gardener"])
+        self.assertEqual(manifest["commands"], ["commands/gardener.md"])
+        self.assertEqual(manifest["agents"], ["agents/comment-gardener.md"])
+
+    def test_agy_manifest_exposes_skill_command_and_agent(self):
+        manifest = load_json("plugin.json")
+        self.assertEqual(manifest["skills"], ["skills/comment-gardener"])
+        self.assertEqual(manifest["commands"], ["commands/gardener.md"])
+        self.assertEqual(manifest["agents"], ["agents/comment-gardener.md"])
+
+    def test_named_agent_is_a_thin_adapter(self):
+        text = (ROOT / "agents/comment-gardener.md").read_text()
+        self.assertIn("comment-gardener:comment-gardener", text)
+        self.assertIn("complete job packet", text)
+        self.assertIn("self-discover", text)
+        self.assertNotIn("## Cumulative mode policy", text)
+
+    def test_command_passes_arguments_to_the_canonical_skill(self):
+        text = (ROOT / "commands/gardener.md").read_text()
+        self.assertIn("comment-gardener:comment-gardener", text)
+        self.assertIn("$ARGUMENTS", text)
+        self.assertNotIn("## Cumulative mode policy", text)
 
     def test_codex_manifest_discovers_the_canonical_skill(self):
         manifest = load_json(".codex-plugin/plugin.json")

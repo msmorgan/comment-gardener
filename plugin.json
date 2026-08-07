@@ -1,0 +1,8 @@
+{
+  "name": "comment-gardener",
+  "version": "0.1.0",
+  "description": "Standards-aware maintenance for comments and doc comments.",
+  "skills": ["skills/comment-gardener"],
+  "commands": ["commands/gardener.md"],
+  "agents": ["agents/comment-gardener.md"]
+}

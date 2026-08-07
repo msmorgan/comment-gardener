@@ -15,5 +15,8 @@
     "docstrings",
     "code-quality",
     "jujutsu"
-  ]
+  ],
+  "skills": ["skills/comment-gardener"],
+  "commands": ["commands/gardener.md"],
+  "agents": ["agents/comment-gardener.md"]
 }

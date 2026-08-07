@@ -1,7 +1,3 @@
----
-description: Prune or polish comments in explicit paths, the current changeset, a jj stack, or a revset.
----
-
 Invoke the fully qualified `comment-gardener:comment-gardener` skill and follow it exactly.
 
-Treat `$ARGUMENTS` as the target brief. An empty target brief must remain a no-op.
+Pass `$ARGUMENTS` unchanged as the target and optional `--mode jungle|garden|zen` brief. An empty target remains a no-op. Delegate complete job packets to the named `comment-gardener` agent when the host makes it available; otherwise execute through the skill.
