@@ -50,8 +50,8 @@ Refer to `skills/comment-gardener/SKILL.md` for detailed rules and canonical dir
 
 ## Model Selection
 
-- **Fast / High-Throughput Tier (Recommended Default):** Gemini Flash, Claude Haiku, or GPT-4o-mini. Ideal for bulk retrofits and fast changeset reviews across large file counts.
-- **Precision Tier:** Claude Sonnet or Gemini Pro. Recommended when polishing subtle API contracts or mathematical/concurrency invariants.
+- **High-Throughput / Bulk Gardening Tier (Recommended Default):** Gemini Flash. Ideal for large codebase retrofits, bulk comment pruning, and fast changeset reviews across large file counts.
+- **Precision / Deep Reasoning Tier:** Claude Sonnet, Gemini Pro, or Claude Opus. Recommended when polishing subtle API contracts or mathematical/concurrency invariants.
 
 ---
 

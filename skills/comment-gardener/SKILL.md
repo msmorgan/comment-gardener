@@ -75,11 +75,11 @@ When processing large directories or retrofitting large codebases (e.g., >10 fil
 
 ## Model Selection & Tier Guidance
 
-- **Fast / High-Throughput Tier (Recommended Default):**
-  - Models: **Gemini Flash**, **Claude Haiku**, or **GPT-4o-mini**.
-  - Best for: Large codebase retrofits, bulk comment pruning, fast changeset reviews. Provides high speed, large context windows, and low cost.
-- **Precision Tier:**
-  - Models: **Claude Sonnet**, **Gemini Pro**, or **GPT-4o**.
+- **High-Throughput / Bulk Gardening Tier (Recommended Default):**
+  - Models: **Gemini Flash**.
+  - Best for: Large codebase retrofits, bulk comment pruning, and fast pre-absorb changeset reviews. Offers fast execution, massive context window (1M+ tokens), high accuracy, and low cost.
+- **Precision / Deep Reasoning Tier:**
+  - Models: **Claude Sonnet**, **Gemini Pro**, or **Claude Opus**.
   - Best for: Complex public API docstring refactoring, subtle mathematical/concurrency invariant polishing, or safety-critical docstring contracts.
 
 ---
