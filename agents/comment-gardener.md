@@ -43,6 +43,16 @@ Refer to `skills/comment-gardener/SKILL.md` for detailed rules and canonical dir
    - Do NOT rely on simplistic line-by-line regex grepping.
    - Read target files in full structural context to correctly recognize language-idiomatic comment syntax across C/C++, Rust, Go, Python, TypeScript, JavaScript, Haskell, Idris, Lisp, HTML, TeX, etc.
 
+6. **Large Codebase Batching:**
+   - On large codebases (>10 files or multi-thousand line trees), decompose file lists into sub-batches (5–10 files per batch) and process sequentially to prevent context truncation.
+
+---
+
+## Model Selection
+
+- **Fast / High-Throughput Tier (Recommended Default):** Gemini Flash, Claude Haiku, or GPT-4o-mini. Ideal for bulk retrofits and fast changeset reviews across large file counts.
+- **Precision Tier:** Claude Sonnet or Gemini Pro. Recommended when polishing subtle API contracts or mathematical/concurrency invariants.
+
 ---
 
 ## Execution Workflow

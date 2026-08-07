@@ -45,6 +45,26 @@ A cross-compatible AI agent plugin, skill, and slash command for pruning narrati
 
 ---
 
+## ⚡ Large Codebase Gardening & Batching
+
+When pointing `comment-gardener` at a large directory or multi-thousand line codebase (e.g. 100k–200k lines):
+
+- **Sub-batch Processing:** The agent automatically decomposes large file lists into sequential sub-batches (5–10 files or ~5,000 lines per batch). It will **never** try to load 200,000 lines into prompt context at once.
+- **Safe Incremental Progress:** Edits are written progressively sub-batch by sub-batch, making massive codebase retrofits fast, reliable, and easy to inspect.
+
+---
+
+## 🤖 Recommended Models
+
+- **Fast / High-Throughput Tier (Default Choice):**
+  - **Gemini Flash**, **Claude Haiku**, or **GPT-4o-mini**.
+  - Recommended for bulk codebase retrofits, scanning large file counts, and pre-commit cleanup. Provides high speed, 1M+ token context windows, and low cost.
+- **Precision Tier:**
+  - **Claude Sonnet**, **Gemini Pro**, or **GPT-4o**.
+  - Recommended when polishing complex public API contracts, formal JSDoc/PyDoc specifications, or subtle mathematical and concurrency invariants.
+
+---
+
 ## 📦 Installation & Setup
 
 `comment-gardener` supports both **Claude Code** and **Antigravity CLI (AGY)** agent harnesses.

@@ -58,6 +58,32 @@ Target files MUST be explicitly resolved before processing. Never scan or edit f
 
 ---
 
+## Large Codebase Batching Protocol
+
+When processing large directories or retrofitting large codebases (e.g., >10 files or multi-thousand line trees):
+
+1. **Sub-batch Decomposition:**
+   - NEVER load an entire large repository into context at once.
+   - Decompose target file lists into manageable sub-batches (5–10 files or ~5,000 lines per batch).
+   - Process sub-batches sequentially, applying edits in-place before proceeding to the next batch.
+
+2. **Progressive Execution:**
+   - Keep a running tally of files processed, comments pruned, and comments preserved across sub-batches.
+   - Output the consolidated summary report once all sub-batches complete.
+
+---
+
+## Model Selection & Tier Guidance
+
+- **Fast / High-Throughput Tier (Recommended Default):**
+  - Models: **Gemini Flash**, **Claude Haiku**, or **GPT-4o-mini**.
+  - Best for: Large codebase retrofits, bulk comment pruning, fast changeset reviews. Provides high speed, large context windows, and low cost.
+- **Precision Tier:**
+  - Models: **Claude Sonnet**, **Gemini Pro**, or **GPT-4o**.
+  - Best for: Complex public API docstring refactoring, subtle mathematical/concurrency invariant polishing, or safety-critical docstring contracts.
+
+---
+
 ## Language-Agnostic Context Reading
 
 - Do NOT use fragile line-by-line grepping for comment symbols.
