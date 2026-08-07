@@ -48,8 +48,8 @@ Refer to `skills/comment-gardener/SKILL.md` for detailed rules and canonical dir
 
 ## Model Selection & Effort Level
 
-- **High-Throughput / Bulk Gardening Tier (Recommended Default):** Gemini Flash. Ideal for large codebase retrofits, bulk comment pruning, and fast changeset reviews across large file counts.
-- **Precision / Deep Reasoning Tier:** Claude Sonnet, Gemini Pro, or Claude Opus. Recommended when polishing subtle API contracts or mathematical/concurrency invariants.
+- **High-Throughput / Bulk Gardening Tier (Recommended Default):** Gemini Flash or GPT Luna. Ideal for large codebase retrofits, bulk comment pruning, and fast changeset reviews across large file counts.
+- **Precision / Deep Reasoning Tier:** Claude Sonnet, Claude Opus, Gemini Pro, or GPT Sol / Terra. Recommended when polishing subtle API contracts or mathematical/concurrency invariants.
 - **Effort Level (Thinking Budget):**
   - **Low / Medium Effort (Default):** Optimal for standard comment pruning and docstring cleanup to ensure fast execution and minimal latency.
   - **High Effort:** Recommended when verifying dense mathematical/algorithmic comments or complex concurrency invariants.

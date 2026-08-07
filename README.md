@@ -55,10 +55,10 @@ When pointing `comment-gardener` at a large directory or multi-thousand line cod
 ## 🤖 Recommended Models & Effort Levels
 
 - **High-Throughput / Bulk Gardening Tier (Recommended Default):**
-  - **Gemini Flash**.
+  - **Gemini Flash** or **GPT Luna**.
   - Recommended for bulk codebase retrofits, scanning large file counts, and pre-commit cleanup. Provides high speed, 1M+ token context window, high accuracy, and low cost.
 - **Precision / Deep Reasoning Tier:**
-  - **Claude Sonnet**, **Gemini Pro**, or **Claude Opus**.
+  - **Claude Sonnet**, **Claude Opus**, **Gemini Pro**, or **GPT Sol / Terra**.
   - Recommended when polishing complex public API contracts, formal JSDoc/PyDoc specifications, or subtle mathematical and concurrency invariants.
 - **Effort Level (Thinking Budget):**
   - **Low / Medium Effort (Default):** Optimal for standard comment pruning and docstring formatting to maximize speed and minimize latency.
