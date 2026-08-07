@@ -52,9 +52,7 @@ When pointing `comment-gardener` at a large directory or multi-thousand line cod
 - **Sub-batch Processing:** The agent automatically decomposes large file lists into sequential sub-batches (5–10 files or ~5,000 lines per batch). It will **never** try to load 200,000 lines into prompt context at once.
 - **Safe Incremental Progress:** Edits are written progressively sub-batch by sub-batch, making massive codebase retrofits fast, reliable, and easy to inspect.
 
----
-
-## 🤖 Recommended Models
+## 🤖 Recommended Models & Effort Levels
 
 - **High-Throughput / Bulk Gardening Tier (Recommended Default):**
   - **Gemini Flash**.
@@ -62,6 +60,9 @@ When pointing `comment-gardener` at a large directory or multi-thousand line cod
 - **Precision / Deep Reasoning Tier:**
   - **Claude Sonnet**, **Gemini Pro**, or **Claude Opus**.
   - Recommended when polishing complex public API contracts, formal JSDoc/PyDoc specifications, or subtle mathematical and concurrency invariants.
+- **Effort Level (Thinking Budget):**
+  - **Low / Medium Effort (Default):** Optimal for standard comment pruning and docstring formatting to maximize speed and minimize latency.
+  - **High Effort:** Recommended only when evaluating dense algorithmic proofs or complex mathematical formulas in code comments where deep logic verification is required before editing.
 
 ---
 

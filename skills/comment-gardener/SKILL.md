@@ -73,7 +73,7 @@ When processing large directories or retrofitting large codebases (e.g., >10 fil
 
 ---
 
-## Model Selection & Tier Guidance
+## Model Selection & Effort Level Guidance
 
 - **High-Throughput / Bulk Gardening Tier (Recommended Default):**
   - Models: **Gemini Flash**.
@@ -81,6 +81,9 @@ When processing large directories or retrofitting large codebases (e.g., >10 fil
 - **Precision / Deep Reasoning Tier:**
   - Models: **Claude Sonnet**, **Gemini Pro**, or **Claude Opus**.
   - Best for: Complex public API docstring refactoring, subtle mathematical/concurrency invariant polishing, or safety-critical docstring contracts.
+- **Effort Level Guidance (Thinking Budget):**
+  - **Low / Medium Effort (Default):** Standard comment maintenance (pruning AI self-talk, removing trivial restatements, polishing docstrings) follows direct structural rules. Low/medium effort ensures maximum speed, minimal token overhead, and high accuracy.
+  - **High Effort:** Recommended only when evaluating dense algorithmic proofs, complex mathematical formulas in comments, or subtle concurrency bounds where deep logic verification is required before editing comments.
 
 ---
 

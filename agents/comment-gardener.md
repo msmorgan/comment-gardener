@@ -46,12 +46,13 @@ Refer to `skills/comment-gardener/SKILL.md` for detailed rules and canonical dir
 6. **Large Codebase Batching:**
    - On large codebases (>10 files or multi-thousand line trees), decompose file lists into sub-batches (5–10 files per batch) and process sequentially to prevent context truncation.
 
----
-
-## Model Selection
+## Model Selection & Effort Level
 
 - **High-Throughput / Bulk Gardening Tier (Recommended Default):** Gemini Flash. Ideal for large codebase retrofits, bulk comment pruning, and fast changeset reviews across large file counts.
 - **Precision / Deep Reasoning Tier:** Claude Sonnet, Gemini Pro, or Claude Opus. Recommended when polishing subtle API contracts or mathematical/concurrency invariants.
+- **Effort Level (Thinking Budget):**
+  - **Low / Medium Effort (Default):** Optimal for standard comment pruning and docstring cleanup to ensure fast execution and minimal latency.
+  - **High Effort:** Recommended when verifying dense mathematical/algorithmic comments or complex concurrency invariants.
 
 ---
 
