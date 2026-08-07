@@ -1,122 +1,66 @@
-# 🌿 comment-gardener
+# Comment Gardener
 
-A cross-compatible AI agent plugin, skill, and slash command for pruning narrative filler and maintaining high-quality code comments across software codebases without altering executable code logic.
+Comment Gardener is a conservative Agent Skill for pruning narrative filler, trivial restatements, obsolete scratch notes, and unexplained commented-out code. It preserves rationale, contracts, directives, invariants, and other semantic comments, then requires a complete diff review.
 
-`comment-gardener` is designed for two primary workflows:
-1. **Pre-commit / Pre-absorb Cleanup**: Clean up AI self-talk monologues, scratchpad notes, and conversational filler from uncommitted changes before running `jj absorb` or opening a pull request.
-2. **Codebase Retrofit**: Batch-process legacy codebases to prune trivial restatements and narrative filler while preserving critical "why" rationale and public API docstrings.
+Version 0.1.0 supports Claude Code, AGY (Antigravity), and Codex.
 
----
+## Safety model
 
-## 🎯 Core Directives & Invariants
+Comment syntax is not always non-semantic. Comment Gardener therefore preserves:
 
-`comment-gardener` operates under strict safety invariants:
+- shebangs, encoding declarations, pragmas, and tool directives;
+- build, generation, lint, type-checking, coverage, and source-map annotations;
+- SQL optimizer hints and similar tool-consumed comments;
+- conditional-compilation regions such as `#if 0 … #endif`;
+- public contracts and runtime-significant docstrings; and
+- comments needed to keep surrounding tokens separate.
 
-- **Zero Logic Mutations:** Never alter, refactor, reorder, or delete executable code, imports, variable names, function signatures, data types, or control flow logic. Every executable byte remains untouched.
-- **Comment-Only Target Scope:** Only modify inline comments, block comments, docstrings (`JSDoc`, `PyDoc`, `Rustdoc`, Idris `|||`, Go docstrings), conditional compilation blocks (`#if 0`), and embedded code block comments.
-- **Markdown Prose Preservation:** Markdown files (`.md`, `.mdx`) and general prose documentation are not treated as code comments. Markdown body prose is preserved untouched unless explicit HTML comments (`<!-- ... -->`) or embedded code block comments match pruning criteria.
+Suspicious prose or dead code inside a protected conditional region is reported as a protected candidate instead of silently edited. The skill makes best-effort comment-only edits and verifies the VCS diff; review that diff before accepting the result.
 
----
+All VCS access is read-only. The Gardener edits working-copy files, but never commits, absorbs, rebases, restores, creates or moves bookmarks, or pushes.
 
-## ✂ Gardening Rules
+## Install
 
-### ✂ PRUNE (Delete Completely)
-- **Trivial "What" Restatements:** Line-by-line descriptions of self-explanatory code operations (e.g. `x += 1 // increment x`).
-- **AI Narrative & Monologues:** Conversational progress logging, step-by-step thinking, and narrative filler left behind by AI coding assistants (e.g. `// Now we create a helper function for error handling`).
-- **Un-annotated Dead Code:** Commented-out code blocks without explicit rationale or `// TODO:` / `// FIXME:` tags.
-- **Obsolete Scratchpad Notes:** Temporary debug flags, status notes, and resolved reminders.
+### Claude Code
 
-### 🌿 NURTURE & POLISH (Retain & Refine)
-- **Essential "Why" Rationale:** Non-obvious design choices, business logic quirks, edge-case workarounds, performance trade-offs, and mathematical formulas.
-- **Safety & Concurrency Invariants:** Mutex acquire ordering rules, memory layout constraints, thread safety guarantees, and security invariants.
-- **Public API Contracts & Docstrings:** JSDoc, PyDoc, Rustdoc, Idris `|||` docstrings, Go docstrings, and Doxygen blocks. Formatting is cleaned up and narrative noise is removed while parameter descriptions, return value contracts, side effects, and thrown exception specs are preserved.
-
----
-
-## 🚀 Target Brief Modes
-
-`comment-gardener` requires an explicit target brief to run. It will never perform silent auto-scans across an entire codebase without explicit target instructions.
-
-| Mode | Command Example | Behavior |
-| --- | --- | --- |
-| **Explicit Paths** | `/gardener src/components` or `/gardener lib/parser.ts` | Processes specified file(s) or recursively scans target directory paths. |
-| **Changeset Mode** | `/gardener --changeset` or `/gardener -r 'immutable_heads()..@'` | Queries touched files via `jj diff -r 'immutable_heads()..@' --summary` (or `git diff --name-only` fallback) and processes only modified/added files. |
-| **Empty Brief** | `/gardener` (no arguments) | Does **not** touch any files. Immediately outputs: `Empty target brief: 0 files processed.` |
-
----
-
-## ⚡ Large Codebase Gardening & Batching
-
-When pointing `comment-gardener` at a large directory or multi-thousand line codebase (e.g. 100k–200k lines):
-
-- **Sub-batch Processing:** The agent automatically decomposes large file lists into sequential sub-batches (5–10 files or ~5,000 lines per batch). It will **never** try to load 200,000 lines into prompt context at once.
-- **Safe Incremental Progress:** Edits are written progressively sub-batch by sub-batch, making massive codebase retrofits fast, reliable, and easy to inspect.
-
-## 🤖 Recommended Models & Effort Levels
-
-- **High-Throughput / Bulk Gardening Tier (Recommended Default):**
-  - **Gemini Flash** or **GPT Luna**.
-  - Recommended for bulk codebase retrofits, scanning large file counts, and pre-commit cleanup. Provides high speed, 1M+ token context window, high accuracy, and low cost.
-- **Precision / Deep Reasoning Tier:**
-  - **Claude Sonnet**, **Claude Opus**, **Gemini Pro**, or **GPT Sol / Terra**.
-  - Recommended when polishing complex public API contracts, formal JSDoc/PyDoc specifications, or subtle mathematical and concurrency invariants.
-- **Effort Level (Thinking Budget):**
-  - **Low / Medium Effort (Default):** Optimal for standard comment pruning and docstring formatting to maximize speed and minimize latency.
-  - **High Effort:** Recommended only when evaluating dense algorithmic proofs or complex mathematical formulas in code comments where deep logic verification is required before editing.
-
----
-
-## 📦 Installation & Setup
-
-`comment-gardener` supports both **Claude Code** and **Antigravity CLI (AGY)** agent harnesses.
-
-### Installing for Claude Code (`~/.claude/plugins`)
-
-Clone or link the repository into your Claude Code plugins directory:
-
-```bash
-# Direct clone
-git clone https://github.com/your-org/comment-gardener.git ~/.claude/plugins/comment-gardener
-
-# Or symlink from a local working copy
-ln -s /path/to/comment-gardener ~/.claude/plugins/comment-gardener
+```console
+claude plugin marketplace add msmorgan/comment-gardener
+claude plugin install comment-gardener@comment-gardener --scope user
 ```
 
-### Installing for AGY / Antigravity CLI (`~/.gemini/config/plugins`)
+### AGY
 
-Clone or link the repository into your AGY plugins directory:
-
-```bash
-# Direct clone
-git clone https://github.com/your-org/comment-gardener.git ~/.gemini/config/plugins/comment-gardener
-
-# Or symlink from a local working copy
-ln -s /path/to/comment-gardener ~/.gemini/config/plugins/comment-gardener
+```console
+agy plugin install https://github.com/msmorgan/comment-gardener
 ```
 
----
+### Codex
 
-## 🔄 Recommended VCS Workflow: `jj absorb`
+```console
+codex plugin marketplace add msmorgan/comment-gardener
+codex plugin add comment-gardener@comment-gardener
+```
 
-`comment-gardener` works seamlessly with modern version control systems like **Jujutsu (`jj`)** and **Git**.
+Start a new harness session after installation so its skill catalog reloads.
 
-### Pre-commit / Pre-absorb Workflow
+## Use
 
-1. Perform your regular development work or pair-programming session with an AI assistant.
-2. Clean up uncommitted comments in modified files:
-   ```bash
-   /gardener --changeset
-   ```
-3. Review the summary report and inspect diffs using `jj diff` (or `git diff`).
-4. Fold comment cleanup edits into parent commits using `jj absorb`:
-   ```bash
-   jj absorb
-   ```
+| Harness | Example |
+| --- | --- |
+| Claude Code | `/comment-gardener:gardener --changeset` |
+| AGY | `/gardener --changeset` |
+| Codex | `Use $comment-gardener:comment-gardener on --changeset` |
 
-Because `comment-gardener` makes zero logic mutations, `jj absorb` can cleanly fold comment refinements into their exact origin revisions without conflict.
+Target modes:
 
----
+- `<path>...` processes explicitly named files or directories.
+- `--changeset` processes only the current jj working-copy revision (`@`).
+- `--stack` processes the mutable jj stack (`immutable_heads()..@`).
+- `-r <revset>` processes an explicit jj revset.
+- An empty target brief is a no-op.
 
-## 📄 License
+Large targets are processed in small batches. The final report includes edits, preserved highlights, protected candidates, and verification performed.
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.
+## License
+
+MIT. See [LICENSE](LICENSE).

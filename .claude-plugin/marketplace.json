@@ -1,0 +1,20 @@
+{
+  "name": "comment-gardener",
+  "description": "Comment Gardener plugin marketplace",
+  "owner": {
+    "name": "Michael Morgan",
+    "email": "self@msmorgan.dev"
+  },
+  "plugins": [
+    {
+      "name": "comment-gardener",
+      "description": "Conservative pruning and polishing for code comments and docstrings.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "Michael Morgan",
+        "email": "self@msmorgan.dev"
+      }
+    }
+  ]
+}

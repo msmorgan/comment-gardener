@@ -1,0 +1,38 @@
+{
+  "name": "comment-gardener",
+  "version": "0.1.0",
+  "description": "Conservative pruning and polishing for code comments and docstrings.",
+  "author": {
+    "name": "Michael Morgan",
+    "email": "self@msmorgan.dev",
+    "url": "https://github.com/msmorgan"
+  },
+  "homepage": "https://github.com/msmorgan/comment-gardener",
+  "repository": "https://github.com/msmorgan/comment-gardener",
+  "license": "MIT",
+  "keywords": [
+    "comments",
+    "docstrings",
+    "code-quality",
+    "jujutsu"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Comment Gardener",
+    "shortDescription": "Prune noise while preserving semantic comments",
+    "longDescription": "Review explicitly targeted code comments and docstrings, remove obvious narrative noise, preserve directives and contracts, and verify that executable code remains unchanged.",
+    "developerName": "Michael Morgan",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/msmorgan/comment-gardener",
+    "defaultPrompt": [
+      "Garden comments in the current jj changeset.",
+      "Prune narrative comments from these paths."
+    ],
+    "brandColor": "#4F7F52",
+    "screenshots": []
+  }
+}
