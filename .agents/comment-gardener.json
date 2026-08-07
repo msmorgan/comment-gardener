@@ -1,0 +1,5 @@
+{
+  "name": "comment-gardener",
+  "description": "Specialized agent that reviews, refines, and prunes code comments while strictly preserving executable code logic.",
+  "skill": "skills/comment-gardener/SKILL.md"
+}

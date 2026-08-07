@@ -1,0 +1,8 @@
+{
+  "name": "comment-gardener",
+  "version": "1.0.0",
+  "description": "Cross-compatible AI agent plugin for pruning narrative filler and maintaining high-quality code comments.",
+  "skills": ["skills/comment-gardener"],
+  "commands": ["commands/gardener.md"],
+  "agents": ["agents/comment-gardener.md"]
+}
