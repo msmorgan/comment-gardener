@@ -270,7 +270,11 @@ def parse_git_diff(text: str) -> list[SeedScope]:
                     SeedScope(rename_old, rename_new, None, None, None, None)
                 )
 
-    for line in text.splitlines():
+    lines = text.split("\n")
+    if text.endswith("\n"):
+        lines.pop()
+
+    for line in lines:
         if line.startswith("diff --git "):
             finish_file()
             fields = _split_diff_header(line[len("diff --git ") :])

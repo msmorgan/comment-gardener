@@ -146,6 +146,20 @@ class FinalFindingsTest(unittest.TestCase):
             with self.subTest(diff=diff), self.assertRaises(packet.PacketError):
                 packet.parse_git_diff(diff)
 
+    def test_hunk_body_preserves_non_lf_line_separators(self):
+        separators = ("\f", "\v", "\x85", "\u2028", "\u2029")
+        expected = [packet.SeedScope(None, "a.py", 0, 0, 1, 1)]
+        for separator in separators:
+            with self.subTest(separator=repr(separator)):
+                diff = (
+                    "diff --git a/a.py b/a.py\n"
+                    "--- /dev/null\n"
+                    "+++ b/a.py\n"
+                    "@@ -0,0 +1 @@\n"
+                    f"+new{separator}page\n"
+                )
+                self.assertEqual(packet.parse_git_diff(diff), expected)
+
     def test_numeric_hunk_failures_are_packet_errors(self):
         enormous = "9" * 5000
         diff = (
