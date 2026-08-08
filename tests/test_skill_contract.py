@@ -1,9 +1,39 @@
+import os
+import re
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL = (ROOT / "skills/comment-gardener/SKILL.md").read_text()
+SKILL_PATH = Path(
+    os.environ.get(
+        "COMMENT_GARDENER_SKILL_CONTRACT_PATH",
+        ROOT / "skills/comment-gardener/SKILL.md",
+    )
+)
+SKILL = SKILL_PATH.read_text()
+
+PACKET_SECTIONS = [
+    "Mode",
+    "Seed scopes",
+    "Policy sources",
+    "Exact user constraints",
+    "Environment capabilities",
+    "Verification commands",
+    "Required report",
+]
+
+REPORT_FIELDS = [
+    "Effective mode",
+    "Policy sources read",
+    "Seed scopes",
+    "Reference expansion",
+    "Edits",
+    "Preserved and protected comments",
+    "Ambiguities",
+    "Verification commands and results",
+    "Packet fields or policy clauses that changed a verdict",
+]
 
 
 class SkillContractTest(unittest.TestCase):
@@ -11,18 +41,11 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("resolve the plugin root from this loaded skill", SKILL)
         self.assertIn("python3 scripts/build_packet.py", SKILL)
         self.assertIn("pass its stdout unchanged", SKILL)
-        for section in (
-            "Mode",
-            "Seed scopes",
-            "Policy sources",
-            "Exact user constraints",
-            "Environment capabilities",
-            "Verification commands",
-            "Required report",
-        ):
-            self.assertIn(f"`{section}`", SKILL)
-
-        self.assertIn("only these seven input sections", SKILL)
+        match = re.search(
+            r"only these seven input sections, in this order: ([^.]+)\.", SKILL
+        )
+        self.assertIsNotNone(match)
+        self.assertEqual(re.findall(r"`([^`]+)`", match.group(1)), PACKET_SECTIONS)
         self.assertNotIn("standards receipt", SKILL.lower())
         self.assertNotIn("impact-only files", SKILL.lower())
 
@@ -100,20 +123,10 @@ class SkillContractTest(unittest.TestCase):
             self.assertIn(phrase, SKILL)
 
     def test_report_has_exactly_the_nine_packet_fields(self):
-        fields = (
-            "Effective mode",
-            "Policy sources read",
-            "Seed scopes",
-            "Reference expansion",
-            "Edits",
-            "Preserved and protected comments",
-            "Ambiguities",
-            "Verification commands and results",
-            "Packet fields or policy clauses that changed a verdict",
-        )
         self.assertIn("exactly these nine fields", SKILL)
-        for field in fields:
-            self.assertIn(f"`{field}`", SKILL)
+        report = SKILL.split("## Report\n", 1)[1]
+        fields = re.findall(r"(?m)^\d+\. `([^`]+)`$", report)
+        self.assertEqual(fields, REPORT_FIELDS)
         self.assertIn("concise verdict-flip receipt", SKILL)
         self.assertIn("every packet field or policy clause that changed a verdict", SKILL)
 
