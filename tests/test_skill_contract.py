@@ -45,7 +45,14 @@ class SkillContractTest(unittest.TestCase):
             r"only these seven input sections, in this order: ([^.]+)\.", SKILL
         )
         self.assertIsNotNone(match)
-        self.assertEqual(re.findall(r"`([^`]+)`", match.group(1)), PACKET_SECTIONS)
+        items = re.split(r",\s+(?:and\s+)?", match.group(1))
+        self.assertEqual(len(items), len(PACKET_SECTIONS))
+        names = []
+        for item in items:
+            formatted = re.fullmatch(r"`([^`]+)`", item)
+            self.assertIsNotNone(formatted, f"noncanonical packet section: {item!r}")
+            names.append(formatted.group(1))
+        self.assertEqual(names, PACKET_SECTIONS)
         self.assertNotIn("standards receipt", SKILL.lower())
         self.assertNotIn("impact-only files", SKILL.lower())
 
@@ -125,8 +132,14 @@ class SkillContractTest(unittest.TestCase):
     def test_report_has_exactly_the_nine_packet_fields(self):
         self.assertIn("exactly these nine fields", SKILL)
         report = SKILL.split("## Report\n", 1)[1]
-        fields = re.findall(r"(?m)^\d+\. `([^`]+)`$", report)
-        self.assertEqual(fields, REPORT_FIELDS)
+        items = re.findall(r"(?m)^(\d+)\. (.+)$", report)
+        self.assertEqual([int(number) for number, _ in items], list(range(1, 10)))
+        names = []
+        for _, item in items:
+            formatted = re.fullmatch(r"`([^`]+)`", item)
+            self.assertIsNotNone(formatted, f"noncanonical report field: {item!r}")
+            names.append(formatted.group(1))
+        self.assertEqual(names, REPORT_FIELDS)
         self.assertIn("concise verdict-flip receipt", SKILL)
         self.assertIn("every packet field or policy clause that changed a verdict", SKILL)
 

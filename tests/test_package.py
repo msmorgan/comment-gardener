@@ -20,7 +20,7 @@ def load_adapter(relative_path):
 
 
 def complete_packet_rediscovery_patterns():
-    subject = r"(?:targets?|standards?|policy(?:-source)?s?|impact)"
+    subject = r"(?:targets?|standards?|policy(?:[\s-]+sources?)?|impact)\b"
     action = (
         r"(?:re-?discover\w*|re-?resolve\w*|search[^.\n]{0,40}again|"
         r"scan[^.\n]{0,40}again|repeat[^.\n]{0,20}discover\w*)"
