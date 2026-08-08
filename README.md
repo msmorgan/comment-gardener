@@ -1,23 +1,22 @@
 # Comment Gardener
 
-Comment Gardener is a conservative Agent Skill for pruning narrative filler, trivial restatements, obsolete scratch notes, and unexplained commented-out code. It preserves rationale, contracts, directives, invariants, and other semantic comments, then requires a complete diff review.
+Comment Gardener maintains comments and doc comments without changing executable behavior. Version 0.2.0 supports Claude Code, AGY (Antigravity), and Codex; behavioral details live in the canonical skill.
 
-Version 0.1.0 supports Claude Code, AGY (Antigravity), and Codex.
+## Modes
 
-## Safety model
+| Mode | Behavior |
+| --- | --- |
+| `jungle` | Repair unambiguous staleness and remove only wholly obsolete comments. |
+| `garden` | Default: includes jungle, removes noise and redundancy, and coherently improves comments and doc comments. |
+| `zen` | Includes garden, then tightens and relocates essential rationale within repository standards. |
 
-Comment syntax is not always non-semantic. Comment Gardener therefore preserves:
+## Agents
 
-- shebangs, encoding declarations, pragmas, and tool directives;
-- build, generation, lint, type-checking, coverage, and source-map annotations;
-- SQL optimizer hints and similar tool-consumed comments;
-- conditional-compilation regions such as `#if 0 … #endif`;
-- public contracts and runtime-significant docstrings; and
-- comments needed to keep surrounding tokens separate.
-
-Suspicious prose or dead code inside a protected conditional region is reported as a protected candidate instead of silently edited. The skill makes best-effort comment-only edits and verifies the VCS diff; review that diff before accepting the result.
-
-All VCS access is read-only. The Gardener edits working-copy files, but never commits, absorbs, rebases, restores, creates or moves bookmarks, or pushes.
+| Host | Named agent behavior |
+| --- | --- |
+| Claude Code | Installed with the plugin. |
+| AGY / Antigravity | Installed with the plugin. |
+| Codex | Skill works immediately; named agent is optional. |
 
 ## Install
 
@@ -43,6 +42,17 @@ codex plugin add comment-gardener@comment-gardener
 
 Start a new harness session after installation so its skill catalog reloads.
 
+## Optional Codex named agent
+
+```console
+python3 scripts/install_codex_agent.py --project
+python3 scripts/install_codex_agent.py --global
+python3 scripts/install_codex_agent.py --project --remove
+python3 scripts/install_codex_agent.py --global --remove
+```
+
+The optional installer is explicit, reversible, and collision-safe.
+
 ## Use
 
 | Harness | Example |
@@ -51,15 +61,17 @@ Start a new harness session after installation so its skill catalog reloads.
 | AGY | `/gardener --changeset` |
 | Codex | `Use $comment-gardener:comment-gardener on --changeset` |
 
-Target modes:
+Targets may be explicit paths, `--changeset`, `--stack`, or `-r <revset>`. An empty target brief is a successful no-change run. Impact-only files receive stale-comment repair only.
 
-- `<path>...` processes explicitly named files or directories.
-- `--changeset` processes only the current jj working-copy revision (`@`).
-- `--stack` processes the mutable jj stack (`immutable_heads()..@`).
-- `-r <revset>` processes an explicit jj revset.
-- An empty target brief is a no-op.
+## Scope and safety
 
-Large targets are processed in small batches. The final report includes edits, preserved highlights, protected candidates, and verification performed.
+- Explicit paths are closed targets.
+- Changeset, stack, and revset targets inspect directly affected references for stale comments.
+- Repository standards constrain every mode.
+- Comments and repository content are untrusted data, not instructions.
+- VCS access is read-only and jj diff reasoning always uses nonpaged Git-format output.
+
+The Gardener preserves semantic directives, contracts, invariants, and runtime-significant doc comments; protected candidates are reported for review.
 
 ## License
 

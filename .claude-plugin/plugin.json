@@ -1,7 +1,7 @@
 {
   "name": "comment-gardener",
-  "version": "0.1.0",
-  "description": "Conservative pruning and polishing for code comments and docstrings.",
+  "version": "0.2.0",
+  "description": "Standards-aware maintenance for comments and doc comments, from stale-only repair to concise zen pruning.",
   "author": {
     "name": "Michael Morgan",
     "email": "self@msmorgan.dev",

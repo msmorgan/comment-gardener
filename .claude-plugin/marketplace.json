@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "comment-gardener",
-      "description": "Conservative pruning and polishing for code comments and docstrings.",
-      "version": "0.1.0",
+      "description": "Standards-aware maintenance for comments and doc comments, from stale-only repair to concise zen pruning.",
+      "version": "0.2.0",
       "source": "./",
       "author": {
         "name": "Michael Morgan",

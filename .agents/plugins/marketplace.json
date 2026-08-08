@@ -6,6 +6,8 @@
   "plugins": [
     {
       "name": "comment-gardener",
+      "description": "Standards-aware maintenance for comments and doc comments, from stale-only repair to concise zen pruning.",
+      "version": "0.2.0",
       "source": {
         "source": "url",
         "url": "./"
