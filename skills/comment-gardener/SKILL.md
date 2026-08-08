@@ -9,7 +9,7 @@ Improve comments and doc comments without changing program behavior. The reposit
 
 ## Build the canonical packet
 
-For orchestration, resolve the plugin root from this loaded skill, run `python3 scripts/build_packet.py` from that root with the resolved user brief, and pass its stdout unchanged to the worker. The canonical job packet has only these seven input sections, in this order: `Mode`, `Seed scopes`, `Policy sources`, `Exact user constraints`, `Environment capabilities`, `Verification commands`, and `Required report`. Do not add caller framing, inferred fields, protections, or editorial conclusions outside those sections.
+For orchestration, resolve the plugin root from this loaded skill and form the absolute path to `scripts/build_packet.py`. Invoke that absolute helper path with Python and the resolved user brief; preserve the user's target working directory, then pass its stdout unchanged to the worker. The package-relative identity remains `python3 scripts/build_packet.py`; do not change to the plugin root before invoking it. The canonical job packet has only these seven input sections, in this order: `Mode`, `Seed scopes`, `Policy sources`, `Exact user constraints`, `Environment capabilities`, `Verification commands`, and `Required report`. Do not add caller framing, inferred fields, protections, or editorial conclusions outside those sections.
 
 A complete canonical packet suppresses only target and policy-source discovery. It is authoritative for those resolved inputs, but the worker still reads policy sources, expands references, applies policy and mode semantics, edits, verifies, and reports. For large targets, workers may process batches of 5–10 files or roughly 5,000 lines while keeping one cumulative tally.
 
@@ -19,7 +19,7 @@ Always skip generated files and report them, even when they are explicitly named
 
 ## Read policy sources
 
-Read every named policy file in packet order and decide applicability from its exact text. Explicit normative repository standards bind every mode. Equal-authority conflicts preserve the affected comments and are reported.
+Read every named policy file in packet order and decide applicability from its exact text, but resolve every policy source's scope and precedence from that source's exact text. Explicit normative repository standards bind every mode. Apply narrower policy sources and supplementary policy sources only within the scope and authority established by their contents. Packet order never supplies policy precedence, and local prevalence never supplies policy precedence. Equal-authority conflicts preserve the entire affected comment unchanged and are reported.
 
 When bounded self-discovery is required, read applicable root-to-target ancestor instruction files broad to narrow; then inspect at most four nearby contribution, style, or lint policy files; follow at most two directly referenced local policy files, one hop only. Do not use web search. If no explicit standard applies, sample at most three nearby declarations. Local sampling supplies only delimiters, wrapping, citation spelling, headings, and attachment form. Prevalence never supplies a keep, remove, compress, repair, or relocate verdict.
 
@@ -80,7 +80,8 @@ Normal Codex use requires no custom-agent installation. Only install when the us
 
 ## Handle failures
 
-- Empty or empty-resolved targets and no eligible comments are successful no-ops.
+- Empty or empty-resolved targets are successful no-ops. No eligible comments is a successful no-op, but is not evidence that the packet was well framed.
+- Repository- or caller-derived scalar fields that cannot be rendered without changing packet structure fail closed before worker execution.
 - Invalid modes, malformed packets, and target-resolution failures stop before edits.
 - Missing policy files stop packet execution; direct invocation with no applicable standard uses the bounded local-format fallback.
 - Conflicting standards and ambiguous value or correctness preserve affected comments and are reported.

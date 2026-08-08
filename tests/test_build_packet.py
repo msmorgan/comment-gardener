@@ -40,10 +40,11 @@ class PacketParserTest(RepositoryTestCase):
             "diff --git a/old.py b/new.py\n"
             "similarity index 80%\nrename from old.py\nrename to new.py\n"
             "--- a/old.py\n+++ b/new.py\n@@ -4,2 +4,3 @@\n"
+            " old\n-removed\n+first\n+second\n"
             "diff --git a/gone.py b/gone.py\ndeleted file mode 100644\n"
-            "--- a/gone.py\n+++ /dev/null\n@@ -8 +0,0 @@\n"
+            "--- a/gone.py\n+++ /dev/null\n@@ -8 +0,0 @@\n-gone\n"
             "diff --git a/new.py b/new.py\nnew file mode 100644\n"
-            "--- /dev/null\n+++ b/new.py\n@@ -0,0 +1 @@\n"
+            "--- /dev/null\n+++ b/new.py\n@@ -0,0 +1 @@\n+new\n"
         )
         self.assertEqual(
             packet.parse_git_diff(diff),
@@ -57,9 +58,11 @@ class PacketParserTest(RepositoryTestCase):
     def test_multiple_hunks_are_sorted_and_stably_deduplicated(self):
         diff = (
             "diff --git a/z.py b/z.py\n--- a/z.py\n+++ b/z.py\n"
-            "@@ -6,0 +7,2 @@\n@@ -1 +1 @@\n@@ -1 +1 @@\n"
+            "@@ -6,0 +7,2 @@\n+first\n+second\n"
+            "@@ -1 +1 @@\n-old\n+new\n"
+            "@@ -1 +1 @@\n-old\n+new\n"
             "diff --git a/a.py b/a.py\n--- a/a.py\n+++ b/a.py\n"
-            "@@ -2 +3 @@ context\n"
+            "@@ -2 +3 @@ context\n-old\n+new\n"
         )
         self.assertEqual(
             packet.parse_git_diff(diff),
@@ -73,7 +76,8 @@ class PacketParserTest(RepositoryTestCase):
     def test_quoted_git_paths_decode_json_compatible_escapes(self):
         diff = (
             'diff --git "a/sp ace\\t.py" "b/sp ace\\t.py"\n'
-            '--- "a/sp ace\\t.py"\n+++ "b/sp ace\\t.py"\n@@ -1 +1 @@\n'
+            '--- "a/sp ace\\t.py"\n+++ "b/sp ace\\t.py"\n'
+            '@@ -1 +1 @@\n-old\n+new\n'
         )
         self.assertEqual(packet.parse_git_diff(diff)[0].new_path, "sp ace\t.py")
 
@@ -238,7 +242,7 @@ python3 -m unittest
             [],
             [],
         )
-        self.assertIn("- `new.py`: old 4,2; new 7,0", ranged)
+        self.assertIn("- old `old.py`; new `new.py`: old 4,2; new 7,0", ranged)
         self.assertEqual(ranged.count("- None."), 4)
         empty = packet.render_packet("garden", [], [], [], [], [])
         self.assertIn("## Seed scopes\n- Resolution: successful no-op.\n- None.", empty)
@@ -341,7 +345,10 @@ class PacketCliTest(RepositoryTestCase):
         self.assertLess(first.stdout.index("check-one"), first.stdout.index("check-two"))
 
     def test_diff_targets_use_exact_jj_argv(self):
-        diff = "diff --git a/a.py b/a.py\n--- a/a.py\n+++ b/a.py\n@@ -1 +1 @@\n"
+        diff = (
+            "diff --git a/a.py b/a.py\n--- a/a.py\n+++ b/a.py\n"
+            "@@ -1 +1 @@\n-old\n+new\n"
+        )
         environment, log = self.install_fake_jj(diff)
         cases = (
             (("--changeset",), "@"),

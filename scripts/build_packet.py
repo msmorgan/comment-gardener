@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -14,6 +15,27 @@ HUNK_RE = re.compile(
 )
 POLICY_NAMES = ("AGENTS.md", "CLAUDE.md", "GEMINI.md")
 VALID_MODES = ("jungle", "garden", "zen")
+PACKET_HEADINGS = (
+    "Mode",
+    "Seed scopes",
+    "Policy sources",
+    "Exact user constraints",
+    "Environment capabilities",
+    "Verification commands",
+    "Required report",
+)
+REPORT_FIELDS = (
+    "Effective mode",
+    "Policy sources read",
+    "Seed scopes",
+    "Reference expansion",
+    "Edits",
+    "Preserved and protected comments",
+    "Ambiguities",
+    "Verification commands and results",
+    "Packet fields or policy clauses that changed a verdict",
+)
+FENCE_OPEN_RE = re.compile(r"^(?:\d+\. )?(`{4,})(?:text|console)$")
 
 
 class PacketError(Exception):
@@ -50,6 +72,13 @@ def _sorted_unique_scopes(scopes):
     return sorted(set(scopes), key=_scope_key)
 
 
+def _append_filesystem_character(target, character):
+    try:
+        target.extend(os.fsencode(character))
+    except UnicodeEncodeError as error:
+        raise PacketError("undecodable quoted Git path") from error
+
+
 def _decode_quoted_git_path(value):
     if not value.startswith('"'):
         if '"' in value:
@@ -58,25 +87,25 @@ def _decode_quoted_git_path(value):
     if len(value) < 2 or not value.endswith('"'):
         raise PacketError("undecodable quoted Git path")
 
-    decoded = []
+    decoded = bytearray()
     index = 1
     end = len(value) - 1
-    escapes = {
-        '"': '"',
-        "\\": "\\",
-        "/": "/",
-        "b": "\b",
-        "f": "\f",
-        "n": "\n",
-        "r": "\r",
-        "t": "\t",
+    byte_escapes = {
+        '"': ord('"'),
+        "\\": ord("\\"),
+        "/": ord("/"),
+        "b": 0x08,
+        "f": 0x0C,
+        "n": 0x0A,
+        "r": 0x0D,
+        "t": 0x09,
     }
     while index < end:
         character = value[index]
         if character != "\\":
             if ord(character) < 0x20:
                 raise PacketError("undecodable quoted Git path")
-            decoded.append(character)
+            _append_filesystem_character(decoded, character)
             index += 1
             continue
 
@@ -84,8 +113,8 @@ def _decode_quoted_git_path(value):
         if index >= end:
             raise PacketError("undecodable quoted Git path")
         escape = value[index]
-        if escape in escapes:
-            decoded.append(escapes[escape])
+        if escape in byte_escapes:
+            decoded.append(byte_escapes[escape])
             index += 1
             continue
         if escape == "u":
@@ -111,17 +140,17 @@ def _decode_quoted_git_path(value):
                 index += 6
             elif 0xDC00 <= codepoint <= 0xDFFF:
                 raise PacketError("undecodable quoted Git path")
-            decoded.append(chr(codepoint))
+            _append_filesystem_character(decoded, chr(codepoint))
             continue
         if escape in "01234567":
             digits = value[index : index + 3]
             if len(digits) != 3 or any(digit not in "01234567" for digit in digits):
                 raise PacketError("undecodable quoted Git path")
-            decoded.append(chr(int(digits, 8)))
+            decoded.append(int(digits, 8))
             index += 3
             continue
         raise PacketError("undecodable quoted Git path")
-    return "".join(decoded)
+    return os.fsdecode(bytes(decoded))
 
 
 def _split_diff_header(value):
@@ -179,31 +208,86 @@ def _marker_path(line, prefix):
     return _git_path(_decode_quoted_git_path(value), prefix)
 
 
+def _rename_path(line, prefix):
+    value = _decode_quoted_git_path(line.split(" ", 2)[2])
+    return _git_path(prefix + value, prefix)
+
+
+def _parse_hunk_numbers(match):
+    try:
+        old_start = int(match.group(1))
+        old_count = int(match.group(2)) if match.group(2) is not None else 1
+        new_start = int(match.group(3))
+        new_count = int(match.group(4)) if match.group(4) is not None else 1
+    except ValueError as error:
+        raise PacketError("invalid numeric hunk range") from error
+    if (old_start == 0 and old_count != 0) or (new_start == 0 and new_count != 0):
+        raise PacketError("invalid zero-start hunk range")
+    if old_count == 0 and new_count == 0:
+        raise PacketError("hunk contains no lines")
+    return old_start, old_count, new_start, new_count
+
+
 def parse_git_diff(text: str) -> list[SeedScope]:
     scopes = []
     header_old = None
     header_new = None
     marker_old = None
     marker_new = None
+    rename_old = None
+    rename_new = None
     have_header = False
     have_old_marker = False
     have_new_marker = False
-    in_hunk = False
+    had_hunk = False
+    expected_old = None
+    expected_new = None
+    seen_old = 0
+    seen_new = 0
+
+    def finish_hunk():
+        nonlocal expected_old, expected_new, seen_old, seen_new
+        if expected_old is not None and (
+            seen_old != expected_old or seen_new != expected_new
+        ):
+            raise PacketError("hunk body does not match declared ranges")
+        expected_old = None
+        expected_new = None
+        seen_old = 0
+        seen_new = 0
+
+    def finish_file():
+        finish_hunk()
+        if not have_header:
+            return
+        if (rename_old is None) != (rename_new is None):
+            raise PacketError("incomplete rename header")
+        if rename_old is not None:
+            if rename_old != header_old or rename_new != header_new:
+                raise PacketError("rename path does not match diff header")
+            if not had_hunk:
+                scopes.append(
+                    SeedScope(rename_old, rename_new, None, None, None, None)
+                )
 
     for line in text.splitlines():
         if line.startswith("diff --git "):
+            finish_file()
             fields = _split_diff_header(line[len("diff --git ") :])
             header_old = _git_path(fields[0], "a/")
             header_new = _git_path(fields[1], "b/")
             marker_old = None
             marker_new = None
+            rename_old = None
+            rename_new = None
             have_header = True
             have_old_marker = False
             have_new_marker = False
-            in_hunk = False
+            had_hunk = False
             continue
 
         if line.startswith("@@"):
+            finish_hunk()
             match = HUNK_RE.fullmatch(line)
             if match is None:
                 raise PacketError("malformed hunk header")
@@ -215,22 +299,41 @@ def parse_git_diff(text: str) -> list[SeedScope]:
                 raise PacketError("old Git path does not match diff header")
             if marker_new is not None and marker_new != header_new:
                 raise PacketError("new Git path does not match diff header")
-            old_start, old_count, new_start, new_count = match.groups()
+            old_start, old_count, new_start, new_count = _parse_hunk_numbers(match)
             scopes.append(
                 SeedScope(
                     marker_old,
                     marker_new,
-                    int(old_start),
-                    int(old_count) if old_count is not None else 1,
-                    int(new_start),
-                    int(new_count) if new_count is not None else 1,
+                    old_start,
+                    old_count,
+                    new_start,
+                    new_count,
                 )
             )
-            in_hunk = True
+            expected_old = old_count
+            expected_new = new_count
+            had_hunk = True
             continue
 
-        if in_hunk:
+        if expected_old is not None:
+            if line == "\\ No newline at end of file":
+                continue
+            if not line:
+                raise PacketError("malformed hunk body")
+            marker = line[0]
+            if marker == " ":
+                seen_old += 1
+                seen_new += 1
+            elif marker == "-":
+                seen_old += 1
+            elif marker == "+":
+                seen_new += 1
+            else:
+                raise PacketError("malformed hunk body")
+            if seen_old > expected_old or seen_new > expected_new:
+                raise PacketError("hunk body exceeds declared ranges")
             continue
+
         if line.startswith("--- "):
             if not have_header or have_old_marker or have_new_marker:
                 raise PacketError("file marker without diff header")
@@ -241,7 +344,16 @@ def parse_git_diff(text: str) -> list[SeedScope]:
                 raise PacketError("file marker without diff header")
             marker_new = _marker_path(line, "b/")
             have_new_marker = True
+        elif line.startswith("rename from "):
+            if not have_header or rename_old is not None or had_hunk:
+                raise PacketError("invalid rename header")
+            rename_old = _rename_path(line, "a/")
+        elif line.startswith("rename to "):
+            if not have_header or rename_new is not None or had_hunk:
+                raise PacketError("invalid rename header")
+            rename_new = _rename_path(line, "b/")
 
+    finish_file()
     return _sorted_unique_scopes(scopes)
 
 
@@ -270,10 +382,13 @@ def _resolved_root(root):
 
 def _has_symlink_component(root, relative):
     current = root
-    for part in relative.parts:
-        current = current / part
-        if current.is_symlink():
-            return True
+    try:
+        for part in relative.parts:
+            current = current / part
+            if current.is_symlink():
+                return True
+    except OSError as error:
+        raise PacketError("filesystem traversal failed") from error
     return False
 
 
@@ -284,24 +399,32 @@ def _materialized_file(root, value, description):
         raise PacketError(f"{description} is not a materialized regular file")
     try:
         candidate.resolve(strict=True).relative_to(root)
+        is_file = candidate.is_file()
     except (OSError, RuntimeError, ValueError) as error:
         raise PacketError(f"{description} is not a materialized regular file") from error
-    if not candidate.is_file():
+    if not is_file:
         raise PacketError(f"{description} is not a materialized regular file")
     return candidate
 
 
 def _directory_files(directory):
+    try:
+        children = sorted(directory.iterdir(), key=lambda path: path.name)
+    except OSError as error:
+        raise PacketError("explicit directory traversal failed") from error
     files = []
-    for child in sorted(directory.iterdir(), key=lambda path: path.name):
-        if child.is_symlink():
-            continue
-        if child.is_file():
-            files.append(child)
-        elif child.is_dir():
-            files.extend(_directory_files(child))
-        else:
-            raise PacketError("explicit directory contains a special file")
+    for child in children:
+        try:
+            if child.is_symlink():
+                continue
+            if child.is_file():
+                files.append(child)
+            elif child.is_dir():
+                files.extend(_directory_files(child))
+            else:
+                raise PacketError("explicit directory contains a special file")
+        except OSError as error:
+            raise PacketError("explicit directory traversal failed") from error
     return files
 
 
@@ -315,23 +438,18 @@ def resolve_explicit_paths(root: Path, values) -> list[SeedScope]:
             raise PacketError("explicit target is not materialized")
         try:
             target.resolve(strict=True).relative_to(root)
+            is_file = target.is_file()
+            is_dir = target.is_dir()
         except (OSError, RuntimeError, ValueError) as error:
             raise PacketError("explicit target is missing or outside the repository") from error
-        if target.is_file():
+        if is_file:
             files.append(target)
-        elif target.is_dir():
+        elif is_dir:
             files.extend(_directory_files(target))
         else:
             raise PacketError("explicit target is not a regular file or directory")
     return _sorted_unique_scopes(
-        SeedScope(
-            None,
-            path.relative_to(root).as_posix(),
-            None,
-            None,
-            None,
-            None,
-        )
+        SeedScope(None, path.relative_to(root).as_posix(), None, None, None, None)
         for path in files
     )
 
@@ -339,9 +457,11 @@ def resolve_explicit_paths(root: Path, values) -> list[SeedScope]:
 def _is_materialized_regular_file(root, path):
     try:
         relative = path.relative_to(root)
+        return not _has_symlink_component(root, relative) and path.is_file()
+    except OSError as error:
+        raise PacketError("filesystem traversal failed") from error
     except ValueError:
         return False
-    return not _has_symlink_component(root, relative) and path.is_file()
 
 
 def discover_policy_sources(root: Path, scopes, explicit) -> list[str]:
@@ -382,8 +502,78 @@ def discover_policy_sources(root: Path, scopes, explicit) -> list[str]:
 
 
 def _fence(value):
+    if not isinstance(value, str):
+        raise PacketError("packet scalar is not text")
     longest = max((len(run) for run in re.findall(r"`+", value)), default=0)
     return "`" * max(4, longest + 1)
+
+
+def _safe_inline(value, description):
+    if not isinstance(value, str) or not value:
+        raise PacketError(f"invalid {description}")
+    if "`" in value or any(
+        ord(character) < 0x20 or ord(character) == 0x7F
+        for character in value
+    ):
+        raise PacketError(f"unsafe {description}")
+    if any(character in "\u0085\u2028\u2029" for character in value):
+        raise PacketError(f"unsafe {description}")
+    return value
+
+
+def _validated_scope(scope):
+    old_path = (
+        _safe_inline(scope.old_path, "old scope path")
+        if scope.old_path is not None
+        else None
+    )
+    new_path = (
+        _safe_inline(scope.new_path, "new scope path")
+        if scope.new_path is not None
+        else None
+    )
+    if old_path is None and new_path is None:
+        raise PacketError("scope has no path")
+    ranges = (
+        scope.old_start,
+        scope.old_count,
+        scope.new_start,
+        scope.new_count,
+    )
+    if all(value is None for value in ranges):
+        return old_path, new_path, ranges
+    if any(type(value) is not int or value < 0 for value in ranges):
+        raise PacketError("invalid scope ranges")
+    if (scope.old_start == 0 and scope.old_count != 0) or (
+        scope.new_start == 0 and scope.new_count != 0
+    ):
+        raise PacketError("invalid zero-start scope range")
+    return old_path, new_path, ranges
+
+
+def validate_packet(text: str) -> None:
+    headings = []
+    title_count = 0
+    fence = None
+    for line in text.splitlines():
+        if fence is not None:
+            if line == fence:
+                fence = None
+            continue
+        opening = FENCE_OPEN_RE.fullmatch(line)
+        if opening is not None:
+            fence = opening.group(1)
+            continue
+        if line.startswith("# "):
+            title_count += 1
+            if line != "# Comment Gardener Job Packet":
+                raise PacketError("invalid packet title")
+        elif line.startswith("## "):
+            headings.append(line[3:])
+    if fence is not None:
+        raise PacketError("unterminated packet fence")
+    if title_count != 1 or tuple(headings) != PACKET_HEADINGS:
+        raise PacketError("invalid canonical packet headings")
 
 
 def render_packet(
@@ -394,6 +584,8 @@ def render_packet(
     capabilities,
     verification_commands,
 ) -> str:
+    if mode not in VALID_MODES:
+        raise PacketError("invalid packet mode")
     lines = [
         "# Comment Gardener Job Packet",
         "",
@@ -404,61 +596,58 @@ def render_packet(
     ]
     if scopes:
         for scope in scopes:
-            path = scope.new_path or scope.old_path
-            if scope.old_start is None:
-                lines.append(f"- `{path}`: whole file")
+            old_path, new_path, ranges = _validated_scope(scope)
+            if old_path is not None and new_path is not None and old_path != new_path:
+                label = f"old `{old_path}`; new `{new_path}`"
+            else:
+                label = f"`{new_path or old_path}`"
+            if all(value is None for value in ranges):
+                kind = (
+                    "rename-only whole file"
+                    if old_path is not None and new_path is not None and old_path != new_path
+                    else "whole file"
+                )
+                lines.append(f"- {label}: {kind}")
             else:
                 lines.append(
-                    f"- `{path}`: old {scope.old_start},{scope.old_count}; "
+                    f"- {label}: old {scope.old_start},{scope.old_count}; "
                     f"new {scope.new_start},{scope.new_count}"
                 )
     else:
         lines.extend(("- Resolution: successful no-op.", "- None."))
 
     sections = (
-        ("Policy sources", policy_sources, None),
-        ("Exact user constraints", user_constraints, "text"),
-        ("Environment capabilities", capabilities, None),
-        ("Verification commands", verification_commands, "console"),
+        ("Policy sources", policy_sources, None, "policy source"),
+        ("Exact user constraints", user_constraints, "text", "user constraint"),
+        ("Environment capabilities", capabilities, None, "capability"),
+        (
+            "Verification commands",
+            verification_commands,
+            "console",
+            "verification command",
+        ),
     )
-    for title, values, language in sections:
+    for title, values, language, description in sections:
         lines.extend(("", f"## {title}"))
         if not values:
             lines.append("- None.")
             continue
         for number, value in enumerate(values, 1):
             if language is None:
-                lines.append(f"- `{value}`")
+                lines.append(f"- `{_safe_inline(value, description)}`")
             else:
                 fence = _fence(value)
                 lines.extend((f"{number}. {fence}{language}", value, fence))
 
-    lines.extend(
-        (
-            "",
-            "## Required report",
-            "- Effective mode",
-            "- Policy sources read",
-            "- Seed scopes",
-            "- Reference expansion",
-            "- Edits",
-            "- Preserved and protected comments",
-            "- Ambiguities",
-            "- Verification commands and results",
-            "- Packet fields or policy clauses that changed a verdict",
-        )
-    )
-    return "\n".join(lines) + "\n"
+    lines.extend(("", "## Required report", *(f"- {field}" for field in REPORT_FIELDS)))
+    packet = "\n".join(lines) + "\n"
+    validate_packet(packet)
+    return packet
 
 
 def _run_jj(arguments, cwd, failure):
     try:
-        result = subprocess.run(
-            arguments,
-            cwd=cwd,
-            text=True,
-            capture_output=True,
-        )
+        result = subprocess.run(arguments, cwd=cwd, text=True, capture_output=True)
     except OSError as error:
         raise PacketError(failure) from error
     if result.returncode != 0:
@@ -520,7 +709,7 @@ def main(argv=None) -> int:
             scopes = []
 
         policies = discover_policy_sources(root, scopes, arguments.policy)
-        packet = render_packet(
+        result = render_packet(
             arguments.mode,
             scopes,
             policies,
@@ -532,7 +721,7 @@ def main(argv=None) -> int:
         print(f"comment-gardener: {error}", file=sys.stderr)
         return 2
 
-    print(packet, end="")
+    print(result, end="")
     return 0
 
 
