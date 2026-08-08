@@ -41,15 +41,47 @@ class PackageContractTest(unittest.TestCase):
     def test_named_agent_is_a_thin_adapter(self):
         text = (ROOT / "agents/comment-gardener.md").read_text()
         self.assertIn("comment-gardener:comment-gardener", text)
-        self.assertIn("complete job packet", text)
+        self.assertIn("canonical job packet", text)
+        self.assertIn("unchanged", text)
+        self.assertIn("read every named policy source", text)
+        self.assertIn("discover related reference sites", text)
         self.assertIn("self-discover", text)
+        for repeated in (
+            "repeat target discovery",
+            "repeat standards discovery",
+            "repeat policy-source discovery",
+            "repeat impact discovery",
+        ):
+            self.assertNotIn(repeated, text)
         self.assertNotIn("## Cumulative mode policy", text)
 
     def test_command_passes_arguments_to_the_canonical_skill(self):
         text = (ROOT / "commands/gardener.md").read_text()
         self.assertIn("comment-gardener:comment-gardener", text)
         self.assertIn("$ARGUMENTS", text)
+        self.assertIn("canonical job packet", text)
+        self.assertIn("scripts/build_packet.py", text)
+        self.assertIn("stdout unchanged", text)
+        self.assertIn("named `comment-gardener` worker", text)
+        self.assertIn("current session consumes the same packet", text)
+        self.assertIn("read every named policy source", text)
+        self.assertIn("discover related reference sites", text)
         self.assertNotIn("## Cumulative mode policy", text)
+
+    def test_codex_agent_is_a_thin_packet_adapter(self):
+        text = (ROOT / "assets/codex/comment-gardener.toml").read_text()
+        self.assertIn('model_reasoning_effort = "high"', text)
+        self.assertIn("canonical job packet", text)
+        self.assertIn("unchanged", text)
+        self.assertIn("read every named policy source", text)
+        self.assertIn("discover related reference sites", text)
+        for repeated in (
+            "repeat target discovery",
+            "repeat standards discovery",
+            "repeat policy-source discovery",
+            "repeat impact discovery",
+        ):
+            self.assertNotIn(repeated, text)
 
     def test_codex_manifest_discovers_the_canonical_skill(self):
         manifest = load_json(".codex-plugin/plugin.json")
