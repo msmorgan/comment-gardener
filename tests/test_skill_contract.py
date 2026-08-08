@@ -38,6 +38,12 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("--git", SKILL)
         self.assertIn("Never use jj's native diff", SKILL)
 
+    def test_codex_agent_installation_requires_explicit_request_and_scope(self):
+        self.assertIn("Only install when the user explicitly asks", SKILL)
+        self.assertIn("--project", SKILL)
+        self.assertIn("--global", SKILL)
+        self.assertIn("--remove", SKILL)
+
 
 if __name__ == "__main__":
     unittest.main()

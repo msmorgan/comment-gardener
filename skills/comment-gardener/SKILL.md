@@ -65,6 +65,16 @@ Treat shebangs, encoding declarations, compiler, linker, build, formatter, linte
 - A complete packet suppresses repeated discovery; direct invocation self-discovers missing fields.
 - For large targets, process batches of 5–10 files or roughly 5,000 lines and keep one cumulative tally.
 
+## Install the optional Codex agent
+
+Normal Codex use requires no custom-agent installation. Only install when the user explicitly asks for the named agent.
+
+- Resolve the plugin root from this skill's location.
+- Require the user to choose project or global scope if they did not specify one.
+- Run `python3 <plugin-root>/scripts/install_codex_agent.py --project` or `--global`.
+- For explicit removal, add `--remove`.
+- Never copy, overwrite, or delete an agent definition by hand.
+
 ## Edit and verify
 
 - Rewrite, relocate, or remove eligible comments as needed for the mode.
