@@ -11,9 +11,11 @@ SCRIPT = ROOT / "scripts/install_codex_agent.py"
 TEMPLATE = ROOT / "assets/codex/comment-gardener.toml"
 
 
-def run_installer(*args, cwd, codex_home):
+def run_installer(*args, cwd, codex_home, home=None):
     env = os.environ.copy()
     env["CODEX_HOME"] = str(codex_home)
+    if home is not None:
+        env["HOME"] = str(home)
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
         cwd=cwd,
@@ -47,6 +49,29 @@ class CodexAgentInstallerTest(unittest.TestCase):
                 (codex_home / "agents/comment-gardener.toml").read_bytes(),
                 TEMPLATE.read_bytes(),
             )
+
+    def test_global_install_blank_codex_home_falls_back_to_user_home(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            user_home = root / "user-home"
+            user_home.mkdir()
+            result = run_installer(
+                "--global", cwd=root, codex_home="", home=user_home
+            )
+            installed = user_home / ".codex/agents/comment-gardener.toml"
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(installed.read_bytes(), TEMPLATE.read_bytes())
+            self.assertFalse((root / "agents/comment-gardener.toml").exists())
+
+    def test_global_install_rejects_relative_codex_home(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            result = run_installer(
+                "--global", cwd=root, codex_home="relative-codex-home"
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("CODEX_HOME must be an absolute path", result.stderr)
+            self.assertFalse((root / "relative-codex-home").exists())
 
     def test_install_refuses_dangling_symlink_destination(self):
         with tempfile.TemporaryDirectory() as raw:

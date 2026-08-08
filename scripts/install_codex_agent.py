@@ -27,7 +27,13 @@ def destination(project: bool, cwd: Path, environ: dict[str, str]) -> Path:
     if project:
         base = find_project_root(cwd) / ".codex"
     else:
-        base = Path(environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
+        configured_home = environ.get("CODEX_HOME")
+        if configured_home is None or not configured_home.strip():
+            base = Path.home() / ".codex"
+        else:
+            base = Path(configured_home).expanduser()
+            if not base.is_absolute():
+                raise InstallError("CODEX_HOME must be an absolute path")
     return base / "agents" / FILENAME
 
 

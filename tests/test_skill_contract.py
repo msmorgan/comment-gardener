@@ -32,11 +32,40 @@ class SkillContractTest(unittest.TestCase):
         self.assertIn("standards receipt", SKILL)
         self.assertIn("no explicit standard found", SKILL)
         self.assertIn("Do not use web search", SKILL)
+        self.assertIn("all applicable root-to-target ancestor instruction files", SKILL)
+        self.assertIn("broad-to-narrow order", SKILL)
+        self.assertIn("at most four local contribution, style, and lint policy files", SKILL)
+        self.assertIn(
+            "nearest applicable scope, then policy category, then lexical path", SKILL
+        )
+        self.assertIn("at most two directly referenced local files total", SKILL)
+        self.assertIn("one reference hop only", SKILL)
+        self.assertIn("at most three nearby declarations total", SKILL)
+        self.assertIn(
+            "same-file, same-kind nearest declarations first, then lexical path and source order",
+            SKILL,
+        )
+        self.assertIn("Stop once the standards receipt can state the applicable rule", SKILL)
+        self.assertIn("Direct user and context instructions", SKILL)
+        self.assertIn("narrower target-ancestor instructions", SKILL)
+        self.assertIn("broader repository instructions", SKILL)
+        self.assertIn("explicit policy documents", SKILL)
+        self.assertIn("sampled local patterns", SKILL)
+        self.assertIn("equal-authority conflict", SKILL)
 
     def test_jj_output_is_nonpaged_and_git_formatted(self):
         self.assertIn("jj --no-pager diff", SKILL)
         self.assertIn("--git", SKILL)
         self.assertIn("Never use jj's native diff", SKILL)
+
+    def test_generated_files_and_markdown_body_prose_are_always_protected(self):
+        self.assertIn("Always skip generated files and report them", SKILL)
+        self.assertIn("even when they are explicitly named", SKILL)
+        self.assertIn("Always preserve Markdown body prose", SKILL)
+        self.assertIn("even when documentation is explicitly targeted", SKILL)
+        self.assertIn("syntactic comments inside fenced code", SKILL)
+        self.assertIn("HTML comments", SKILL)
+        self.assertIn("only when explicitly targeted", SKILL)
 
     def test_codex_agent_installation_requires_explicit_request_and_scope(self):
         self.assertIn("Only install when the user explicitly asks", SKILL)

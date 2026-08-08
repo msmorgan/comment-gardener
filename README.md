@@ -44,6 +44,17 @@ Start a new harness session after installation so its skill catalog reloads.
 
 ## Optional Codex named agent
 
+Ask Codex to use the Comment Gardener skill to install the named agent, and specify either project scope or global scope. For example:
+
+```text
+Use $comment-gardener:comment-gardener to install the optional named agent at project scope.
+Use $comment-gardener:comment-gardener to install the optional named agent at global scope.
+```
+
+Ask the skill to remove the named agent at the same scope when it is no longer needed.
+
+Direct Python commands require a plugin checkout and must run from its root:
+
 ```console
 python3 scripts/install_codex_agent.py --project
 python3 scripts/install_codex_agent.py --global
