@@ -48,6 +48,32 @@ class CodexAgentInstallerTest(unittest.TestCase):
                 TEMPLATE.read_bytes(),
             )
 
+    def test_install_refuses_dangling_symlink_destination(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            codex_home = root / "codex-home"
+            target = codex_home / "agents/comment-gardener.toml"
+            redirected = root / "redirected.toml"
+            target.parent.mkdir(parents=True)
+            target.symlink_to(redirected)
+            result = run_installer("--global", cwd=root, codex_home=codex_home)
+            self.assertEqual(result.returncode, 2)
+            self.assertTrue(target.is_symlink())
+            self.assertFalse(redirected.exists())
+
+    def test_install_refuses_symlinked_parent_component(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            codex_home = root / "codex-home"
+            redirected = root / "redirected-agents"
+            codex_home.mkdir()
+            redirected.mkdir()
+            (codex_home / "agents").symlink_to(redirected, target_is_directory=True)
+            result = run_installer("--global", cwd=root, codex_home=codex_home)
+            self.assertEqual(result.returncode, 2)
+            self.assertTrue((codex_home / "agents").is_symlink())
+            self.assertFalse((redirected / "comment-gardener.toml").exists())
+
     def test_install_refuses_to_overwrite_different_content(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

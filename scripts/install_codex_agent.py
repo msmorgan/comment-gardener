@@ -31,7 +31,14 @@ def destination(project: bool, cwd: Path, environ: dict[str, str]) -> Path:
     return base / "agents" / FILENAME
 
 
+def reject_symlinked_components(target: Path) -> None:
+    for component in (target.parent.parent, target.parent, target):
+        if component.is_symlink():
+            raise InstallError(f"refusing symlinked agent path: {component}")
+
+
 def install(template: bytes, target: Path) -> str:
+    reject_symlinked_components(target)
     if target.exists():
         if target.read_bytes() == template:
             return f"already installed: {target}"
@@ -42,6 +49,7 @@ def install(template: bytes, target: Path) -> str:
 
 
 def remove(template: bytes, target: Path) -> str:
+    reject_symlinked_components(target)
     if not target.exists():
         return f"already absent: {target}"
     if target.read_bytes() != template:
