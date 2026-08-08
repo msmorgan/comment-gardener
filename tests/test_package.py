@@ -27,6 +27,14 @@ class PackageContractTest(unittest.TestCase):
         self.assertEqual(manifest["commands"], ["commands/gardener.md"])
         self.assertEqual(manifest["agents"], ["agents/comment-gardener.md"])
 
+    def test_agy_manifest_preserves_claude_metadata(self):
+        claude = load_json(".claude-plugin/plugin.json")
+        agy = load_json("plugin.json")
+
+        self.assertEqual(agy["author"], claude["author"])
+        self.assertEqual(agy["repository"], claude["repository"])
+        self.assertEqual(agy["license"], claude["license"])
+
     def test_named_agent_is_a_thin_adapter(self):
         text = (ROOT / "agents/comment-gardener.md").read_text()
         self.assertIn("comment-gardener:comment-gardener", text)
