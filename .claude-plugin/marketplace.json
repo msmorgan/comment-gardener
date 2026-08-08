@@ -9,7 +9,7 @@
     {
       "name": "comment-gardener",
       "description": "Standards-aware maintenance for comments and doc comments, from stale-only repair to concise zen pruning.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "source": "./",
       "author": {
         "name": "Michael Morgan",

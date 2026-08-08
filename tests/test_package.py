@@ -15,11 +15,14 @@ class PackageContractTest(unittest.TestCase):
         self.assertFalse((ROOT / "gemini-extension.json").exists())
         self.assertFalse((ROOT / ".agents/comment-gardener.json").exists())
 
-    def test_claude_manifest_exposes_skill_command_and_agent(self):
+    def test_claude_manifest_uses_directory_discovery(self):
         manifest = load_json(".claude-plugin/plugin.json")
-        self.assertEqual(manifest["skills"], ["skills/comment-gardener"])
-        self.assertEqual(manifest["commands"], ["commands/gardener.md"])
-        self.assertEqual(manifest["agents"], ["agents/comment-gardener.md"])
+        self.assertNotIn("skills", manifest)
+        self.assertNotIn("commands", manifest)
+        self.assertNotIn("agents", manifest)
+        self.assertTrue((ROOT / "skills/comment-gardener/SKILL.md").is_file())
+        self.assertTrue((ROOT / "commands/gardener.md").is_file())
+        self.assertTrue((ROOT / "agents/comment-gardener.md").is_file())
 
     def test_agy_manifest_exposes_skill_command_and_agent(self):
         manifest = load_json("plugin.json")
@@ -51,10 +54,10 @@ class PackageContractTest(unittest.TestCase):
     def test_codex_manifest_discovers_the_canonical_skill(self):
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], "comment-gardener")
-        self.assertEqual(manifest["version"], "0.2.0")
+        self.assertEqual(manifest["version"], "0.2.1")
         self.assertEqual(manifest["skills"], "./skills/")
 
-    def test_all_package_versions_are_0_2_0(self):
+    def test_all_package_versions_are_0_2_1(self):
         paths = [
             ".agents/plugins/marketplace.json",
             ".claude-plugin/marketplace.json",
@@ -65,9 +68,9 @@ class PackageContractTest(unittest.TestCase):
         for path in paths:
             data = load_json(path)
             if path.endswith("marketplace.json"):
-                self.assertEqual(data["plugins"][0]["version"], "0.2.0", path)
+                self.assertEqual(data["plugins"][0]["version"], "0.2.1", path)
             else:
-                self.assertEqual(data["version"], "0.2.0", path)
+                self.assertEqual(data["version"], "0.2.1", path)
 
     def test_codex_manifest_keeps_skill_only_discovery(self):
         manifest = load_json(".codex-plugin/plugin.json")
@@ -81,7 +84,7 @@ class PackageContractTest(unittest.TestCase):
         codex = load_json(".agents/plugins/marketplace.json")
 
         self.assertEqual(claude["plugins"][0]["name"], "comment-gardener")
-        self.assertEqual(claude["plugins"][0]["version"], "0.2.0")
+        self.assertEqual(claude["plugins"][0]["version"], "0.2.1")
         self.assertEqual(codex["plugins"][0]["name"], "comment-gardener")
         self.assertEqual(codex["plugins"][0]["source"], {"source": "url", "url": "./"})
 
