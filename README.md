@@ -1,6 +1,6 @@
 # Comment Gardener
 
-Comment Gardener maintains comments and doc comments without changing executable behavior. Version 0.2.2 supports Claude Code, AGY (Antigravity), and Codex; behavioral details live in the canonical skill.
+Comment Gardener maintains comments and doc comments without changing executable behavior. Version 0.3.0 supports Claude Code, AGY (Antigravity), and Codex; behavioral details live in the canonical skill.
 
 ## Modes
 
@@ -72,7 +72,17 @@ The optional installer is explicit, reversible, and collision-safe.
 | AGY | `/gardener --changeset` |
 | Codex | `Use $comment-gardener:comment-gardener on --changeset` |
 
-Targets may be explicit paths, `--changeset`, `--stack`, or `-r <revset>`. An empty target brief is a successful no-change run. Impact-only files receive stale-comment repair only.
+The skill normally invokes `scripts/build_packet.py`, then passes the packet unchanged to a named worker when one is available. When no named agent is available, the current session executes the same packet.
+
+Build packets directly from a plugin checkout when you want to inspect the resolved work:
+
+```console
+python3 scripts/build_packet.py --mode zen --path src --policy docs/comment-policy.md
+python3 scripts/build_packet.py --mode jungle --changeset --verify "python3 -m unittest"
+python3 scripts/build_packet.py --mode garden --revset 'all()'
+```
+
+Targets may be explicit paths, `--changeset`, `--stack`, or `-r <revset>`. An empty target brief is a successful no-change run. Packet policy-source paths name files the worker reads itself. Explicit paths are whole-file seeds, while diff targets contain exact hunk spans. The worker discovers reference sites for related staleness only.
 
 ## Scope and safety
 

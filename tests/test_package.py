@@ -100,10 +100,10 @@ class PackageContractTest(unittest.TestCase):
     def test_codex_manifest_discovers_the_canonical_skill(self):
         manifest = load_json(".codex-plugin/plugin.json")
         self.assertEqual(manifest["name"], "comment-gardener")
-        self.assertEqual(manifest["version"], "0.2.2")
+        self.assertEqual(manifest["version"], "0.3.0")
         self.assertEqual(manifest["skills"], "./skills/")
 
-    def test_all_package_versions_are_0_2_2(self):
+    def test_all_package_versions_are_0_3_0(self):
         paths = [
             ".agents/plugins/marketplace.json",
             ".claude-plugin/marketplace.json",
@@ -114,9 +114,9 @@ class PackageContractTest(unittest.TestCase):
         for path in paths:
             data = load_json(path)
             if path.endswith("marketplace.json"):
-                self.assertEqual(data["plugins"][0]["version"], "0.2.2", path)
+                self.assertEqual(data["plugins"][0]["version"], "0.3.0", path)
             else:
-                self.assertEqual(data["version"], "0.2.2", path)
+                self.assertEqual(data["version"], "0.3.0", path)
 
     def test_codex_manifest_keeps_skill_only_discovery(self):
         manifest = load_json(".codex-plugin/plugin.json")
@@ -129,7 +129,7 @@ class PackageContractTest(unittest.TestCase):
         claude = load_json(".claude-plugin/marketplace.json")
         codex = load_json(".agents/plugins/marketplace.json")
         self.assertEqual(claude["plugins"][0]["name"], "comment-gardener")
-        self.assertEqual(claude["plugins"][0]["version"], "0.2.2")
+        self.assertEqual(claude["plugins"][0]["version"], "0.3.0")
         self.assertEqual(codex["plugins"][0]["name"], "comment-gardener")
         self.assertEqual(codex["plugins"][0]["source"], {"source": "url", "url": "./"})
 
@@ -151,6 +151,17 @@ class PackageContractTest(unittest.TestCase):
         self.assertIn("VCS commands are read-only", text)
         self.assertIn("Never commit, absorb, squash, rebase, restore", text)
         self.assertIn("edit only the Gardener's own hunk", text)
+
+    def test_packet_builder_and_host_adapters_use_the_canonical_packet(self):
+        self.assertTrue((ROOT / "scripts/build_packet.py").is_file())
+        for path in [
+            "agents/comment-gardener.md",
+            "commands/gardener.md",
+            "assets/codex/comment-gardener.toml",
+        ]:
+            text = load_adapter(path)
+            self.assertIn("canonical job packet", text, path)
+            self.assertNotIn("## Cumulative mode policy", text, path)
 
 
 if __name__ == "__main__":
