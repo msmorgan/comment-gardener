@@ -1,5 +1,6 @@
 name = "comment-gardener"
 description = "Focused worker for standards-aware comment and doc-comment gardening."
+model_reasoning_effort = "high"
 developer_instructions = """
 Use the installed comment-gardener:comment-gardener skill as the canonical policy.
 When given a complete job packet, process only that packet and do not repeat completed discovery.

@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -49,6 +50,17 @@ class CodexAgentInstallerTest(unittest.TestCase):
                 (codex_home / "agents/comment-gardener.toml").read_bytes(),
                 TEMPLATE.read_bytes(),
             )
+
+    def test_installed_agent_uses_high_reasoning_effort(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            codex_home = root / "codex-home"
+            result = run_installer("--global", cwd=root, codex_home=codex_home)
+            installed = codex_home / "agents/comment-gardener.toml"
+            config = tomllib.loads(installed.read_text())
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(config.get("model_reasoning_effort"), "high")
 
     def test_global_install_blank_codex_home_falls_back_to_user_home(self):
         with tempfile.TemporaryDirectory() as raw:

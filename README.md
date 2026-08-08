@@ -1,6 +1,6 @@
 # Comment Gardener
 
-Comment Gardener maintains comments and doc comments without changing executable behavior. Version 0.2.1 supports Claude Code, AGY (Antigravity), and Codex; behavioral details live in the canonical skill.
+Comment Gardener maintains comments and doc comments without changing executable behavior. Version 0.2.2 supports Claude Code, AGY (Antigravity), and Codex; behavioral details live in the canonical skill.
 
 ## Modes
 
