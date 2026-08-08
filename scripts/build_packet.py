@@ -300,6 +300,8 @@ def _directory_files(directory):
             files.append(child)
         elif child.is_dir():
             files.extend(_directory_files(child))
+        else:
+            raise PacketError("explicit directory contains a special file")
     return files
 
 

@@ -112,6 +112,14 @@ class PacketParserTest(RepositoryTestCase):
                 with self.subTest(target=target), self.assertRaises(packet.PacketError):
                     packet.resolve_explicit_paths(self.root, [target])
 
+    def test_directory_containing_special_file_fails(self):
+        (self.root / "src").mkdir()
+        (self.root / "src/a.py").write_text("x\n")
+        os.mkfifo(self.root / "src/pipe")
+
+        with self.assertRaises(packet.PacketError):
+            packet.resolve_explicit_paths(self.root, ["src"])
+
     def test_directory_symlinks_are_not_followed_and_duplicates_are_removed(self):
         (self.root / "src").mkdir()
         (self.root / "src/a.py").write_text("x\n")
